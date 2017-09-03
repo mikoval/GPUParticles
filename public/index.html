@@ -27,7 +27,7 @@
   particlePositionsTarget =  new THREE.WebGLRenderTarget( SIZE , SIZE, {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter,type: THREE.FloatType,});
   var plane = new THREE.PlaneGeometry( width, height);
 
-  var shaders = new ShaderLoader( '.' );
+  var shaders = new ShaderLoader( './shaders' );
 
 
   shaders.load( 'partical-update'    , 'update'    , 'simulation' );
@@ -36,8 +36,6 @@
   shaders.load( 'partical-collisions'    , 'collide'    , 'simulation' );
   shaders.load( 'vs-lookupW'  , 'lookup' , 'vertex'     );
   shaders.load( 'fs-lookupW'  , 'lookup' , 'fragment'   );
-  shaders.load( 'fs-plane'  , 'plane' , 'fragment'   );
-  shaders.load( 'vs-plane'  , 'plane' , 'vertex'   );
   shaders.load( 'fs-random'  , 'random' , 'fragment'   );
   shaders.load( 'vs-random'  , 'random' , 'vertex'   );
   shaders.shaderSetLoaded = function(){
