@@ -99,12 +99,14 @@
 
       geoBG = new THREE.PlaneGeometry( width, height);
 
-    
+      for(var i =0 ; i < geoBG.vertices.length; i++){
+        geoBG.vertices[i].z = -9000;
+      }
       
       bg = new THREE.Mesh( geoBG, matBG );
-      bg.position.z = -10000.0;
+      //bg.vertices.z = ;
       
-      //scene.add( bg );
+      scene.add( bg );
   }
   function initParticles(){
       var geo = createLookupGeometry( SIZE );
