@@ -7,8 +7,8 @@ uniform vec2  res;
 uniform vec2  screenSize;
 uniform float size;
 uniform float bounce;
-const float width = 16.0;
-const float height = 16.0;
+const float width = 64.0;
+const float height = 64.0;
 
 $rand
 void main(){
