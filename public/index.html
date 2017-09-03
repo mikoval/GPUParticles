@@ -15,8 +15,8 @@
 
 	var scene , camera , renderer  ;
 
-	var SIZE = 64;
-  var particleSize = 4;
+	var SIZE = 16;
+  var particleSize = 10;
   var bounce = 0.3;
 
 	var simulation;
@@ -251,7 +251,7 @@
     for(var i = 0 ; i < 3; i++){
       updateParticles();
       for(var j = 0 ; j < 4; j++){
-         collideParticles();
+        // collideParticles();
          constrainParticles();
       }
     }
