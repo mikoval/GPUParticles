@@ -1,0 +1,351 @@
+<html>
+<body style="margin:0px;">
+
+
+<script src="jquery.min.js"></script>
+<script src="underscore.js"></script>
+<script src="ShaderLoader.js"></script>
+<script src="three.js"></script>
+
+<script src="PhysicsRenderer.js"></script>
+<link rel="stylesheet" type="text/css" href="canvas.css">
+
+<script>
+  
+
+	var scene , camera , renderer  ;
+
+	var SIZE = 64;
+  var particleSize = 4;
+  var bounce = 0.3;
+
+	var simulation;
+	var width = window.innerWidth; 
+	var height = window.innerHeight;
+  particlePositions = new THREE.WebGLRenderTarget( SIZE , SIZE, {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter,type: THREE.FloatType, format: THREE.RGBAFormat});
+  particlePositionsOld =  new THREE.WebGLRenderTarget( SIZE , SIZE, {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter,type: THREE.FloatType,});
+  particlePositionsTarget =  new THREE.WebGLRenderTarget( SIZE , SIZE, {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter,type: THREE.FloatType,});
+  var plane = new THREE.PlaneGeometry( width, height);
+
+  var shaders = new ShaderLoader( '.' );
+
+
+  shaders.load( 'partical-update'    , 'update'    , 'simulation' );
+  shaders.load( 'partical-constrain'    , 'constrain'    , 'simulation' );
+  shaders.load( 'partical-position-constrain'    , 'constrainPosition'    , 'simulation' );
+  shaders.load( 'partical-collisions'    , 'collide'    , 'simulation' );
+  shaders.load( 'vs-lookupW'  , 'lookup' , 'vertex'     );
+  shaders.load( 'fs-lookupW'  , 'lookup' , 'fragment'   );
+  shaders.load( 'fs-plane'  , 'plane' , 'fragment'   );
+  shaders.load( 'vs-plane'  , 'plane' , 'vertex'   );
+  shaders.load( 'fs-random'  , 'random' , 'fragment'   );
+  shaders.load( 'vs-random'  , 'random' , 'vertex'   );
+  shaders.shaderSetLoaded = function(){
+
+    init();
+    animate();
+
+  }
+
+
+  
+  function init(){
+
+      /*
+
+         Default threejs stuff!
+
+      */
+
+      initScene();
+
+      createBackground();
+
+      initParticles();
+
+      
+
+      
+     
+    //////
+     
+      ///////
+
+
+  }
+  function initScene(){
+      scene = new THREE.Scene();
+
+      camera = new THREE.OrthographicCamera(-width/2, width/2, height/2, -height/2, 1, 10000 );
+      camera.position.z = 100;
+
+      renderer = new THREE.WebGLRenderer();
+        
+
+      renderer.setSize(width , height );
+
+      document.body.appendChild( renderer.domElement );
+      var element = renderer.domElement;
+      element.style.width = "100%"
+      element.style.height = "100%"
+
+  }
+  function createBackground(){ 
+
+      var matBG = new THREE.MeshBasicMaterial({
+          //map:null,
+          color:0x663333,
+          
+
+      });
+
+      geoBG = new THREE.PlaneGeometry( width, height);
+
+      for(var i =0 ; i < geoBG.vertices.length; i++){
+        geoBG.vertices[i].z = -9000;
+      }
+      
+      bg = new THREE.Mesh( geoBG, matBG );
+      //bg.vertices.z = ;
+      
+      scene.add( bg );
+  }
+  function initParticles(){
+      var geo = createLookupGeometry( SIZE );
+
+     
+      var mat = new THREE.ShaderMaterial({
+        uniforms: {
+          t_pos: { type: "t", value: null },
+          res:{type:"v2", value: new THREE.Vector2(width, height)},
+          size: {type:"f", value: particleSize}
+        },
+        vertexShader: shaders.vs.lookup,
+        fragmentShader: shaders.fs.lookup,
+
+      });
+      
+      
+
+      particles = new THREE.Points( geo , mat );
+
+
+     // particles.frustumCulled = false;
+
+      scene.add( particles );
+
+      createParticlePositions();
+      createSimulation();
+
+
+
+  }
+  function createSimulation(){
+    createUpdate();
+
+    createConstrain();
+    createCollide();
+  }
+  function createUpdate(){
+    updateScene = new THREE.Scene();
+
+    updateMaterial = new THREE.ShaderMaterial( {
+        uniforms: {
+          pos: { type: "t", value: null },
+          posOld: { type: "t", value: null },
+          res: {type:"v2", value :new THREE.Vector2(SIZE, SIZE)},
+
+        },
+        fragmentShader: shaders.ss.update,
+        vertexShader: shaders.vs.random,
+    } );
+    updateObject = new THREE.Mesh( plane, updateMaterial );
+
+    updateScene.add(updateObject);
+  }
+  function createConstrain(){
+    //calculate new old positions for the verlet bounce
+    constrainScene = new THREE.Scene();
+
+    constrainMaterial = new THREE.ShaderMaterial( {
+        uniforms: {
+          pos: { type: "t", value: null },
+          posOld: { type: "t", value: null },
+          res: {type:"v2", value :new THREE.Vector2(SIZE, SIZE)},
+          screenSize: {type:"v2", value :new THREE.Vector2(width, height)},
+          size: {type:"f", value: particleSize},
+          bounce: {type:"f", value: bounce},
+        },
+        fragmentShader: shaders.ss.constrain,
+        vertexShader: shaders.vs.random,
+    } );
+    constrainObject = new THREE.Mesh( plane, constrainMaterial );
+
+    constrainScene.add(constrainObject);
+
+    //lock the actual positions to inside the screen
+    constrainPositionScene = new THREE.Scene();
+
+    constrainPositionMaterial = new THREE.ShaderMaterial( {
+        uniforms: {
+          pos: { type: "t", value: null },
+          res: {type:"v2", value :new THREE.Vector2(SIZE, SIZE)},
+          screenSize: {type:"v2", value :new THREE.Vector2(width, height)},
+          size: {type:"f", value: particleSize},
+        
+        },
+        fragmentShader: shaders.ss.constrainPosition,
+        vertexShader: shaders.vs.random,
+    } );
+    constrainPositionObject = new THREE.Mesh( plane, constrainPositionMaterial );
+
+    constrainPositionScene.add(constrainPositionObject);
+  }
+  function createCollide(){
+    collideScene = new THREE.Scene();
+
+    collideMaterial = new THREE.ShaderMaterial( {
+        uniforms: {
+          pos: { type: "t", value: null },
+          res: {type:"v2", value :new THREE.Vector2(SIZE, SIZE)},
+          size: {type:"f", value: particleSize},
+
+        },
+        fragmentShader: shaders.ss.collide,
+        vertexShader: shaders.vs.random,
+    } );
+    collideObject = new THREE.Mesh( plane, collideMaterial );
+
+    collideScene.add(collideObject);
+  }
+  function createParticlePositions(){
+     
+      camera2 = new THREE.OrthographicCamera(-SIZE/2, SIZE/2, SIZE/2, -SIZE/2, 1, 10000 );
+      camera2.position.z = 100;
+
+      
+
+
+        randomScene = new THREE.Scene();
+
+        randomMaterial = new THREE.ShaderMaterial( {
+            uniforms: {
+              res: {type:"v2", value :new THREE.Vector2(width, height)},
+            },
+            fragmentShader: shaders.fs.random,
+            vertexShader: shaders.vs.random,
+        } );
+        randomObject = new THREE.Mesh( plane, randomMaterial );
+
+        randomScene.add(randomObject);
+        renderer.render(randomScene,camera2,particlePositions,true);
+        renderer.render(randomScene,camera2,particlePositionsOld,true);
+
+        
+
+
+  }
+  function animate(){
+
+    requestAnimationFrame( animate );
+   
+    //renderer.render(randomScene,camera2,particlePositions);
+    for(var i = 0 ; i < 3; i++){
+      updateParticles();
+      for(var j = 0 ; j < 4; j++){
+         collideParticles();
+         constrainParticles();
+      }
+    }
+    
+   
+    
+
+    particles.material.uniforms.t_pos.value = particlePositions;
+    //bg.material.map = particlePositions;
+    renderer.render( scene , camera );
+
+  } 
+  
+  function collideParticles(){
+    //get current pixels
+  
+
+    // handle collide
+    collideMaterial.uniforms.pos.value = particlePositions;
+    renderer.render(collideScene,camera2,particlePositionsTarget,true);
+    var tmp1 = particlePositions
+    var tmp3 = particlePositionsTarget
+
+
+    particlePositions = tmp3;
+    particlePositionsTarget = tmp1;
+  }
+  function constrainParticles(){
+    //caolculate old positions for verlet collision
+    constrainMaterial.uniforms.pos.value = particlePositions;
+    constrainMaterial.uniforms.posOld.value = particlePositionsOld;
+    renderer.render(constrainScene,camera2,particlePositionsTarget,true);
+    var tmp1 = particlePositions
+    var tmp2 = particlePositionsOld
+    var tmp3 = particlePositionsTarget
+
+    particlePositionsOld = tmp3;
+    particlePositions = tmp1;
+    particlePositionsTarget = tmp2;
+
+    // lock positions to screen
+    constrainPositionMaterial.uniforms.pos.value = particlePositions;
+    renderer.render(constrainPositionScene,camera2,particlePositionsTarget,true);
+    var tmp1 = particlePositions
+    var tmp2 = particlePositionsOld
+    var tmp3 = particlePositionsTarget
+
+
+    particlePositions = tmp3;
+    particlePositionsTarget = tmp1;
+
+
+    
+  }
+  function updateParticles(){
+     
+    updateMaterial.uniforms.pos.value = particlePositions;
+    updateMaterial.uniforms.posOld.value = particlePositionsOld;
+    renderer.render(updateScene,camera2,particlePositionsTarget,true);
+    var tmp1 = particlePositions
+    var tmp2 = particlePositionsOld
+    var tmp3 = particlePositionsTarget
+
+    particlePositionsOld = tmp1;
+
+    particlePositions = tmp3;
+    particlePositionsTarget = tmp2;
+
+    //particles.material.uniforms.t_pos.value = particlePositions;
+  }
+  function createLookupGeometry( size ){        
+        
+    var geo = new THREE.BufferGeometry();
+    var positions = new Float32Array(  size * size * 3 );
+
+    for ( var i = 0, j = 0, l = positions.length / 3; i < l; i ++, j += 3 ) {
+
+      positions[ j     ] = ( i % size ) / size  ;
+      positions[ j + 1 ] = Math.floor( i / size ) / size ;
+
+    
+    }
+    console.log(positions)
+
+    var posA = new THREE.BufferAttribute( positions , 3 );
+    geo.addAttribute( 'position', posA );
+    
+
+    return geo;
+    
+ }
+</script>
+
+</body>
+</html>
