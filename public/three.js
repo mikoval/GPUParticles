@@ -27836,7 +27836,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 				}
 
-				if ( texture.type !== THREE.UnsignedByteType
+				/*if ( texture.type !== THREE.UnsignedByteType
 					&& paramThreeToGL( texture.type ) !== _gl.getParameter( _gl.IMPLEMENTATION_COLOR_READ_TYPE )
 					&& ! ( texture.type === THREE.FloatType && extensions.get( 'WEBGL_color_buffer_float' ) )
 					&& ! ( texture.type === THREE.HalfFloatType && extensions.get( 'EXT_color_buffer_half_float' ) ) ) {
@@ -27845,6 +27845,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 					return;
 
 				}
+				*/
 
 				if ( _gl.checkFramebufferStatus( _gl.FRAMEBUFFER ) === _gl.FRAMEBUFFER_COMPLETE ) {
 
@@ -29917,7 +29918,7 @@ THREE.WebGLShader = ( function () {
 
 		if ( gl.getShaderInfoLog( shader ) !== '' ) {
 
-			console.warn( 'THREE.WebGLShader: gl.getShaderInfoLog()', type === gl.VERTEX_SHADER ? 'vertex' : 'fragment', gl.getShaderInfoLog( shader ), addLineNumbers( string ) );
+			//console.warn( 'THREE.WebGLShader: gl.getShaderInfoLog()', type === gl.VERTEX_SHADER ? 'vertex' : 'fragment', gl.getShaderInfoLog( shader ), addLineNumbers( string ) );
 
 		}
 
