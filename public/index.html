@@ -15,7 +15,7 @@
 
 	var scene , camera , renderer  ;
 
-	var SIZE = 16;
+	var SIZE = 8;
   var particleSize = 20;
   var bounce = 0.3;
   var cellSize = particleSize * 2;
@@ -26,6 +26,9 @@
 	var simulation;
 	var width = window.innerWidth; 
 	var height = window.innerHeight;
+
+  console.log("WIDTH: " + width);
+  console.log("HEIGHT: " + height);
   particlePositions = new THREE.WebGLRenderTarget( SIZE , SIZE, {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter,type: THREE.FloatType, format: THREE.RGBAFormat});
   particlePositionsOld =  new THREE.WebGLRenderTarget( SIZE , SIZE, {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter,type: THREE.FloatType,});
   particlePositionsTarget =  new THREE.WebGLRenderTarget( SIZE , SIZE, {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter,type: THREE.FloatType,});
@@ -71,12 +74,6 @@
 
       
 
-      
-     
-    //////
-     
-      ///////
-
 
   }
   function configShaders(){
@@ -92,25 +89,13 @@
     shaders.ss.collide = sim;
   }
   function initBuckets(){
-    
-     
+  
       numCellsHorizontal = Math.floor(width/cellSize);
       numCellsVertical = Math.floor(height/cellSize);
       
       buckets =  new Float32Array(numCellsHorizontal * particalsPerCell *numCellsVertical* particalsPerCell *4 );
 
-     // console.log(numCellsHorizontal);
-     // console.log(numCellsVertical);
-
-
-    
-    bucketTexture = new THREE.DataTexture( buckets, numCellsHorizontal * particalsPerCell ,   numCellsVertical * particalsPerCell, THREE.RGBAFormat, THREE.FloatType);
-
-   
-
-    
-
-    
+      bucketTexture = new THREE.DataTexture( buckets, numCellsHorizontal * particalsPerCell ,   numCellsVertical * particalsPerCell, THREE.RGBAFormat, THREE.FloatType);
   }
   function initScene(){
       scene = new THREE.Scene();
@@ -175,9 +160,6 @@
 
       createParticlePositions();
       createSimulation();
-
-
-
   }
   function createSimulation(){
     createUpdate();
@@ -294,11 +276,13 @@
    
     
     calculateGridCells();
+    collideParticles();
+    calculateGridCells();
 
     for(var i = 0 ; i < 1; i++){
       updateParticles();
       for(var j = 0 ; j < 5; j++){
-         collideParticles();
+         
          constrainParticles();
       }
     }
@@ -318,11 +302,11 @@
     var positions =  new Float32Array(SIZE * SIZE * 4)
 
     renderer.readRenderTargetPixels(particlePositions, 0, 0, SIZE, SIZE, positions);
-
+    //console.log(positions);
     for(var i = 0; i < buckets.length; i++){
         buckets[i] = 0;
       }
-   
+
     for(var i = 0 ; i < positions.length; i = i + 4){
 
 

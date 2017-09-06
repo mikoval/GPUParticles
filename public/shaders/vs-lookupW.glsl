@@ -8,7 +8,7 @@ void main(){
 
 
   gl_PointSize = size;
-  gl_Position = vec4( pos.x / res.x * 2.0 , pos.y/res.y * 2.0, pos.z, 1. );
+  gl_Position = vec4( pos.x / res.x * 2.0 , pos.y/res.y * 2.0, 0.0, 1. );
 
 
 }

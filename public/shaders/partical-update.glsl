@@ -19,25 +19,26 @@ void main(){
   	float x = posi.x;
   	float y = posi.y;
   	float z = posi.z;
+    float w = posi.w;
 
     dx = dx * 0.99;
     dy = dy * 0.99;
-    dz = dz * 0.99;
+    //dz = dz * 0.99;
 
-    dy = dy - 0.03;
+
+    dy = dy - 0.1;
     x = x + dx;
     y = y + dy;
     
     z = z + dz;
 
  	
-	
- 
+
   
 
 
 
-  gl_FragColor = vec4( x, y, z , 1);
+  gl_FragColor = vec4( x, y, z , w);
 
 
 }

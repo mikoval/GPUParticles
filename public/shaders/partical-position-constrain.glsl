@@ -16,6 +16,7 @@ void main(){
     float x = posi.x;
     float y = posi.y;
     float z = posi.z;
+    float w = posi.w;
 
 
 
@@ -46,7 +47,7 @@ void main(){
 
 
 
-  gl_FragColor = vec4( x, y, z , 1);
+  gl_FragColor = vec4( x, y, z , w);
 
 
 }
