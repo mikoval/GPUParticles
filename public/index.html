@@ -15,11 +15,13 @@
 
 	var scene , camera , renderer  ;
 
-	var SIZE = 8;
-  var particleSize = 20;
-  var bounce = 0.3;
-  var cellSize = particleSize * 2;
-  var particalsPerCell = 4;
+	var SIZE = 64;
+  var particleSize = 10;
+  var bounce = 0.5;
+  var cellSize = particleSize * 4;
+  var particalsPerCell = 5;
+
+  var time = 20;
 
 
 
@@ -94,7 +96,7 @@
       numCellsVertical = Math.floor(height/cellSize);
       
       buckets =  new Float32Array(numCellsHorizontal * particalsPerCell *numCellsVertical* particalsPerCell *4 );
-
+      positions =  new Float32Array(SIZE * SIZE * 4)
       bucketTexture = new THREE.DataTexture( buckets, numCellsHorizontal * particalsPerCell ,   numCellsVertical * particalsPerCell, THREE.RGBAFormat, THREE.FloatType);
   }
   function initScene(){
@@ -175,12 +177,18 @@
           pos: { type: "t", value: null },
           posOld: { type: "t", value: null },
           res: {type:"v2", value :new THREE.Vector2(SIZE, SIZE)},
+          start: {type:"v2", value :new THREE.Vector2(0, 0)},
+          time: {type:"f", value :time},
 
         },
         fragmentShader: shaders.ss.update,
         vertexShader: shaders.vs.random,
     } );
     updateObject = new THREE.Mesh( plane, updateMaterial );
+    $(document).on("mousemove", function(e){
+     updateMaterial.uniforms.start.value.x = e.screenX - width/2;
+     updateMaterial.uniforms.start.value.y = height/2  - e.screenY + 100 ;
+    })
 
     updateScene.add(updateObject);
   }
@@ -275,15 +283,22 @@
     requestAnimationFrame( animate );
    
     
-    calculateGridCells();
-    collideParticles();
-    calculateGridCells();
-
+    
+    
+    
     for(var i = 0 ; i < 1; i++){
       updateParticles();
+
       for(var j = 0 ; j < 5; j++){
+        
+         calculateGridCells();
+  
          
+         collideParticles();
+         
+
          constrainParticles();
+         
       }
     }
     
@@ -291,30 +306,39 @@
     
 
     particles.material.uniforms.t_pos.value = particlePositions;
-    bg.material.map = bucketTexture;
+    //bg.material.map = bucketTexture;
     renderer.render( scene , camera );
 
   } 
 
+  function printPositions(){
+     var positions =  new Float32Array(SIZE * SIZE * 4)
 
+    renderer.readRenderTargetPixels(particlePositions, 0, 0, SIZE, SIZE, positions);
+    console.log(positions);
+  }
 
   function calculateGridCells(){
-    var positions =  new Float32Array(SIZE * SIZE * 4)
+  
 
     renderer.readRenderTargetPixels(particlePositions, 0, 0, SIZE, SIZE, positions);
     //console.log(positions);
     for(var i = 0; i < buckets.length; i++){
-        buckets[i] = 0;
+        buckets[i] = 0.0;
       }
 
     for(var i = 0 ; i < positions.length; i = i + 4){
 
 
-      var px = positions[i];
-      var py = positions[i + 1];
+      var ox = positions[i];
+      var oy = positions[i + 1];
+      var ow = positions[i+3];
+      if(ow < 1){
+        break;
+      }
      
-      var px = Math.floor(( px  + width/2) / cellSize);
-      var py = Math.floor(( py + height/2 ) /  cellSize);
+      var px = Math.floor(( ox  + width/2) / cellSize);
+      var py = Math.floor(( oy + height/2 ) /  cellSize);
       
 
       var indX = px ;
@@ -343,13 +367,13 @@
 
            if(buckets[ind + 2] == 0){
             
-            buckets[ind ] = i/4 %SIZE; 
-            buckets[ind+1 ] = Math.floor(i/4/SIZE);
+            bucketTexture.image.data[ind ] = ox; 
+            bucketTexture.image.data[ind+1 ] = oy;
             //console.log(i/4 %SIZE + ", " + Math.floor(i/4/SIZE) )
             //buckets[ind ] = 0.1;
             // buckets[ind +1] = 1.0;
             //buckets[ind  + 2] = 1.0;
-            buckets[ind  + 2] = 1.0;
+            bucketTexture.image.data[ind  + 2] = 1.0;
             k = 1000;
             l = 1000;
 
@@ -361,7 +385,7 @@
 
     }
     
-    bucketTexture = new THREE.DataTexture( buckets, numCellsHorizontal * particalsPerCell,  numCellsVertical * particalsPerCell, THREE.RGBAFormat, THREE.FloatType);
+    
 
     bucketTexture.needsUpdate = true;
 
@@ -415,8 +439,9 @@
     
   }
   function updateParticles(){
-     
+    time = time + 0.1;
     updateMaterial.uniforms.pos.value = particlePositions;
+    updateMaterial.uniforms.time.value = time;
     updateMaterial.uniforms.posOld.value = particlePositionsOld;
     renderer.render(updateScene,camera2,particlePositionsTarget,true);
     var tmp1 = particlePositions
@@ -451,6 +476,7 @@
     return geo;
     
  }
+
 </script>
 
 </body>

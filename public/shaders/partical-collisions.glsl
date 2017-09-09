@@ -22,7 +22,9 @@
       vec4 posi  = texture2D( pos , uv );
       float x = posi.x;
       float y = posi.y;
-      float target = 1.0 * size;
+      float z = posi.z;
+      float w = posi.w; 
+      float target = size * 1.3;
 
       
       float x_bkt = floor( (x + (screenSize.x/2.0) )/cellSize);
@@ -30,65 +32,42 @@
 
 
       //hard coded values and things work. 
-      float x_bkt_ind_start = 0.0;
-      float y_bkt_ind_start = 0.0;
+      //float x_bkt_ind_start = 0.0;
+      //float y_bkt_ind_start = 0.0;
 
 
       //remove these two comments and things break
-      //float x_bkt_ind_start = x_bkt * particlesPerCell;
-      //float y_bkt_ind_start = y_bkt * particlesPerCell;
-
-
-
-      /*
-      // This check is to guarantee that the values are within the size of the texture. 
-      // Doesn't make a difference. There is no reason for the variables to not be within that range
-      // and if I read them out with javascript they all are.
-    
-      if(x_bkt_ind_start < 0.0){
-        x_bkt_ind_start = 0.0;
-      }
-      if(x_bkt_ind_start  > 144.0){
-        x_bkt_ind_start = 144.0;
-      }
-      if(y_bkt_ind_start < 0.0){
-        y_bkt_ind_start = 0.0;
-      }
-      if(y_bkt_ind_start  > 144.0){
-        y_bkt_ind_start = 144.0;
-      }
-      */
+      float x_bkt_ind_start = x_bkt * particlesPerCell;
+      float y_bkt_ind_start = y_bkt * particlesPerCell;
 
       //this is the code that is acting weirdly
 
-      for(float j = -144.0 ; j < 144.0; j++){
-        for(float i = -144.0 ; i < 144.0; i++){
+      for(float j = -particlesPerCell ; j <= particlesPerCell * 2.0 ; j++){
+        for(float i = -particlesPerCell ; i <= particlesPerCell * 2.0; i++){
 
           float  x_bkt_ind = (x_bkt_ind_start + i)/bucketsWidth;
           float  y_bkt_ind = (y_bkt_ind_start + j)/bucketsHeight;
-
-
-          vec4 ind2 = texture2D( buckets , vec2(x_bkt_ind,y_bkt_ind) );
-
-          if( abs(ind2.z - 1.0) > 0.00001  || x_bkt_ind < 0.0 || x_bkt_ind > 1.0 || y_bkt_ind < 0.0 || y_bkt_ind > 1.0 ){
+          if(x_bkt_ind < 0.0 || x_bkt_ind > 1.0 || y_bkt_ind < 0.0 || y_bkt_ind > 1.0 ){
             continue;
           }
-          
-           vec4 pos2 = texture2D( pos , vec2(ind2.xy)/res );
+
+          vec4 pos2 = texture2D( buckets , vec2(x_bkt_ind,y_bkt_ind) );
+          if(pos2.z != 1.0){
+            continue;
+          }
+
 
            vec2 diff = posi.xy - pos2.xy;
 
-           float dist = length(diff);
+           float dist = abs(length(diff));
 
 
-          vec2 uvDiff = ind2.xy -  gl_FragCoord.xy ;
-          float uvDist = abs(length(uvDiff));
 
           
-          if(dist <= target && uvDist >= 0.5){
+          if(dist <= target && dist > 0.00001){
             float factor = (dist-target)/dist;
-            x = x - diff.x * factor * 0.5;
-            y = y - diff.y * factor * 0.5;
+            x -= diff.x * factor * 0.5;
+            y -= diff.y * factor * 0.5;
           }
 
           
@@ -96,7 +75,7 @@
       }
       
 
-      gl_FragColor = vec4( x, y, x_bkt_ind_start , y_bkt_ind_start);
+      gl_FragColor = vec4( x, y, z , w);
 
 
     }

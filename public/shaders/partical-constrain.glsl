@@ -23,6 +23,7 @@ void main(){
   	float x2 = oPos.x;
   	float y2 = oPos.y;
   	float z2 = oPos.z;
+    float w2 = oPos.z;
 
 
 
@@ -30,30 +31,32 @@ void main(){
 	
  
   
-
-    if(x + size > screenSize.x/2.0){
+    if(x > -10000.0){
+      if(x + size > screenSize.x/2.0){
       
-      x2 = screenSize.x * 0.5 - size + dx * bounce;
+        x2 = screenSize.x * 0.5 - size + dx * bounce;
+      }
+      if(x - size < -screenSize.x/2.0){
+
+        x2 = -screenSize.x * 0.5 + size + dx * bounce;
+      }
+      if(y + size > screenSize.y/2.0){
+       
+        y2 = screenSize.y * 0.5 - size + dy * bounce;
+
+      }
+      if(y  - size  < -screenSize.y * 0.5){
+        
+        y2 = -screenSize.y  * 0.5 +  size + dy * bounce;
+      }
+
     }
-    if(x - size < -screenSize.x/2.0){
-
-      x2 = -screenSize.x * 0.5 + size + dx * bounce;
-    }
-    if(y + size > screenSize.y/2.0){
-     
-      y2 = screenSize.y * 0.5 - size + dy * bounce;
-
-    }
-    if(y  - size  < -screenSize.y * 0.5){
-      
-      y2 = -screenSize.y  * 0.5 +  size + dy * bounce;
-    }
+    
 
 
 
 
-
-  gl_FragColor = vec4( x2, y2, z2 , 1);
+  gl_FragColor = vec4( x2, y2, z2 , w2);
 
 
 }

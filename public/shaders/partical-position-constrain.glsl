@@ -23,27 +23,28 @@ void main(){
  	
 	
  
-  
+     if(x> -10000.0 ){
 
-    if(x + size > screenSize.x/2.0){
-      
-      x = screenSize.x/2.0 - size;
+        if(x + size > screenSize.x/2.0){
+          
+          x = screenSize.x/2.0 - size;
+        }
+        if(x - size < -screenSize.x/2.0){
+
+          x = -screenSize.x/2.0 + size;
+        }
+        if(y + size > screenSize.y/2.0){
+         
+          y = screenSize.y/2.0 - size;
+
+        }
+        if(y  - size  < -screenSize.y * 0.5){
+          
+          y = -screenSize.y/2.0 + size;
+        }
+
+
     }
-    if(x - size < -screenSize.x/2.0){
-
-      x = -screenSize.x/2.0 + size;
-    }
-    if(y + size > screenSize.y/2.0){
-     
-      y = screenSize.y/2.0 - size;
-
-    }
-    if(y  - size  < -screenSize.y * 0.5){
-      
-      y = -screenSize.y/2.0 + size;
-    }
-
-
 
 
 
