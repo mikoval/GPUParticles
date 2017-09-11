@@ -1,6 +1,22 @@
 <html>
+<style>
+  .controls{
+    position:absolute;
+    top:0px;
+    left:0px;
+    padding:10px;
+    background-color: #222222;
+    opacity: 0.7;
+    color:white;
+  }
+</style>
 <body style="margin:0px;">
+<div class="controls">
+  <p>Click to move particle source</p>
+  <p>'f' and drag mouse to create new area</p>
+  <p>Particle Size:<input id='size' type="range" min="5" max="15"></p>
 
+</div>
 
 <script src="jquery.min.js"></script>
 <script src="underscore.js"></script>
@@ -215,7 +231,7 @@
       var geo = createLookupGeometry( SIZE );
 
      
-      var mat = new THREE.ShaderMaterial({
+      particalesMat = new THREE.ShaderMaterial({
         uniforms: {
           t_pos: { type: "t", value: null },
           res:{type:"v2", value: new THREE.Vector2(width, height)},
@@ -228,7 +244,7 @@
       
       
 
-      particles = new THREE.Points( geo , mat );
+      particles = new THREE.Points( geo , particalesMat );
 
 
      // particles.frustumCulled = false;
@@ -262,6 +278,9 @@
     updateObject = new THREE.Mesh( plane, updateMaterial );
 
     $(document).on("click", function(e){
+      if(e.target == $("#size")[0]){
+        return;
+      }
      updateMaterial.uniforms.start.value.x = e.screenX - width/2;
      updateMaterial.uniforms.start.value.y = height/2  - e.screenY + 100 ;
      spawn.position.x = e.screenX - width/2;
@@ -295,7 +314,10 @@
       }
 
     })
-
+    $("#size").on("change", function(){
+      particalesMat.uniforms.size.value = $(this).val();
+      collideMaterial.uniforms.size.value = $(this).val();
+    })
     updateScene.add(updateObject);
   }
   function createConstrain(){
