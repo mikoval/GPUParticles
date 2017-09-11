@@ -8,6 +8,8 @@ uniform vec2  screenSize;
 uniform float size;
 uniform float bounce;
 
+uniform vec4 obstacles[16];
+
 $rand
 void main(){
 
@@ -32,6 +34,8 @@ void main(){
  
   
     if(x > -10000.0){
+     
+
       if(x + size > screenSize.x/2.0){
       
         x2 = screenSize.x * 0.5 - size + dx * bounce;

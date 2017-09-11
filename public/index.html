@@ -15,13 +15,19 @@
 
 	var scene , camera , renderer  ;
 
-	var SIZE = 64;
-  var particleSize = 10;
+	var SIZE = 128;
+  var particleSize = 8;
   var bounce = 0.5;
   var cellSize = particleSize * 4;
   var particalsPerCell = 5;
 
   var time = 20;
+
+  var mouseX = 0;
+  var mouseY = 0;
+  var startX = -300;
+  var startY = 200;
+  var addingCircle = false;
 
 
 
@@ -64,11 +70,14 @@
 
       */
       initBuckets();
-     
+      
+      
 
       initScene();
+
+      initObstacles();
       
-       configShaders();
+      configShaders();
 
       createBackground();
 
@@ -77,6 +86,53 @@
       
 
 
+  }
+  function initObstacles(){
+    obstacles = [];
+    objects = [];
+    obstaclesCounter = 0;
+    for(var i = 0; i < 16; i++){
+      obstacles.push(new THREE.Vector4( -10000.0, -10000.0, 0.0, 0.0 ));
+    }
+
+    
+
+    
+    addCircle(startX,startY, 150);
+    
+    
+
+
+    
+  }
+  function addCircle(x, y, radius){
+    obstacles[obstaclesCounter].x = x;
+    obstacles[obstaclesCounter].y = y;
+    obstacles[obstaclesCounter].z = radius;
+    obstaclesCounter++;
+
+    
+    geoCircle =  new THREE.SphereGeometry( radius, 32, 32 );
+    var matCircle = new THREE.MeshBasicMaterial({
+        //map:null,
+        color:0x825201,
+        
+
+    });
+
+
+    for(var i =0 ; i < geoCircle.vertices.length; i++){
+      geoCircle.vertices[i].z = -9000;
+    }
+    
+    obj = new THREE.Mesh( geoCircle, matCircle );
+    obj.position.x = x;
+    obj.position.y = y;
+
+    objects.push(obj);
+
+    
+    scene.add( obj );
   }
   function configShaders(){
 
@@ -120,7 +176,7 @@
 
       var matBG = new THREE.MeshBasicMaterial({
           //map:null,
-          //color:0x663333,
+          color:0x331111,
           
 
       });
@@ -128,13 +184,32 @@
       geoBG = new THREE.PlaneGeometry( width, height);
 
       for(var i =0 ; i < geoBG.vertices.length; i++){
-        geoBG.vertices[i].z = -9000;
+        geoBG.vertices[i].z = -9001;
       }
       
       bg = new THREE.Mesh( geoBG, matBG );
       //bg.vertices.z = ;
       
       scene.add( bg );
+
+      var matSP = new THREE.MeshBasicMaterial({
+          //map:null,
+          color: 0x006400,
+          
+
+      });
+
+      geoSP =  new THREE.SphereGeometry( 30, 32, 32 );
+
+      for(var i =0 ; i < geoBG.vertices.length; i++){
+        geoSP.vertices[i].z = -1000;
+      }
+      
+      spawn = new THREE.Mesh( geoSP, matSP );
+
+      spawn.position.x = startX;
+      spawn.position.y = startY;
+      scene.add( spawn );
   }
   function initParticles(){
       var geo = createLookupGeometry( SIZE );
@@ -177,7 +252,7 @@
           pos: { type: "t", value: null },
           posOld: { type: "t", value: null },
           res: {type:"v2", value :new THREE.Vector2(SIZE, SIZE)},
-          start: {type:"v2", value :new THREE.Vector2(0, 0)},
+          start: {type:"v2", value :new THREE.Vector2(startX, startY)},
           time: {type:"f", value :time},
 
         },
@@ -185,9 +260,40 @@
         vertexShader: shaders.vs.random,
     } );
     updateObject = new THREE.Mesh( plane, updateMaterial );
-    $(document).on("mousemove", function(e){
+
+    $(document).on("click", function(e){
      updateMaterial.uniforms.start.value.x = e.screenX - width/2;
      updateMaterial.uniforms.start.value.y = height/2  - e.screenY + 100 ;
+     spawn.position.x = e.screenX - width/2;
+     spawn.position.y = height/2  - e.screenY + 100 ;
+
+    })
+    $(document).on("mousemove", function(e){
+     mouseX = e.screenX - width/2;
+     mouseY = height/2  - e.screenY + 100 ;
+     if(addingCircle){
+        var dist = Math.sqrt( (circleCenter.x - mouseX ) * (circleCenter.x - mouseX )  + (circleCenter.y - mouseY ) * (circleCenter.y - mouseY) );
+        obstacles[obstaclesCounter-1].z = dist  + 20;
+        objects[obstaclesCounter-1].scale.x = (dist + 20) / 20 ;
+        objects[obstaclesCounter-1].scale.y = (dist + 20)/ 20 ;
+     }
+
+    })
+    $(document).on("keydown", function(e){
+      if(e.key=="f" && !addingCircle){
+        console.log("adding circle")
+        addingCircle = true;
+        circleCenter = {x:mouseX, y:mouseY};
+        addCircle(mouseX, mouseY, 20);
+      }
+
+    })
+    $(document).on("keyup", function(e){
+      if(e.key=="f"){
+        addingCircle = false;
+        circleCenter = undefined;
+      }
+
     })
 
     updateScene.add(updateObject);
@@ -204,6 +310,7 @@
           screenSize: {type:"v2", value :new THREE.Vector2(width, height)},
           size: {type:"f", value: particleSize},
           bounce: {type:"f", value: bounce},
+          obstacles: {type:"v4v", value :obstacles},
         },
         fragmentShader: shaders.ss.constrain,
         vertexShader: shaders.vs.random,
@@ -221,6 +328,8 @@
           res: {type:"v2", value :new THREE.Vector2(SIZE, SIZE)},
           screenSize: {type:"v2", value :new THREE.Vector2(width, height)},
           size: {type:"f", value: particleSize},
+          obstacles: {type:"v4v", value :obstacles},
+
         
         },
         fragmentShader: shaders.ss.constrainPosition,
@@ -337,12 +446,8 @@
         break;
       }
      
-      var px = Math.floor(( ox  + width/2) / cellSize);
-      var py = Math.floor(( oy + height/2 ) /  cellSize);
-      
-
-      var indX = px ;
-      var indY = py ;
+      var indX = Math.floor(( ox  + width/2) / cellSize);
+      var indY = Math.floor(( oy + height/2 ) /  cellSize);
       //console.log(indX + ", " + indY)
 
 
@@ -439,7 +544,7 @@
     
   }
   function updateParticles(){
-    time = time + 0.1;
+    time = time + 0.3;
     updateMaterial.uniforms.pos.value = particlePositions;
     updateMaterial.uniforms.time.value = time;
     updateMaterial.uniforms.posOld.value = particlePositionsOld;
