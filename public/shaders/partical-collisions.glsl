@@ -69,6 +69,11 @@
             x -= diff.x * factor * 0.5;
             y -= diff.y * factor * 0.5;
           }
+          else if(dist >  target && dist < target * 3.0){
+            
+            x -= diff.x *  0.01 * 1.0 / (dist * dist);
+            y -= diff.y *  0.01 * 1.0 / (dist * dist);
+          }
 
           
         }
